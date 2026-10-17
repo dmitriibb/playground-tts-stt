@@ -1,0 +1,1 @@
+Spracherkennung verwandelt gesprochene Worte in Text. Moderne Modelle wurden mit Hunderttausenden Stunden Audio trainiert und verstehen viele Sprachen.

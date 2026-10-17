@@ -1,0 +1,1 @@
+Speech recognition turns spoken words into text. Modern models are trained on hundreds of thousands of hours of audio and work in many languages.

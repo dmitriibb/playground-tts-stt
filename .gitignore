@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+*.egg-info/
+
+# Env
+.env
+!.env.example
+
+# Models (large, downloaded at runtime)
+models/
+backend/models/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
