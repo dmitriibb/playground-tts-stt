@@ -1,0 +1,97 @@
+[project]
+name = "tts-stt-playground-backend"
+version = "0.1.0"
+description = "Backend for the TTS/STT playground: gateway (HTTP/WS), STT and TTS modules"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "python-multipart>=0.0.9",
+    "numpy>=1.26",
+    "soxr>=0.4",
+    "av>=12",
+    "psutil>=5.9",
+    "httpx>=0.27",
+    "huggingface_hub>=0.24",
+    # One ONNX Runtime build for the whole venv. On Windows we use the DirectML build
+    # (includes the CPU EP); `onnxruntime` is removed via override-dependencies below.
+    "onnxruntime-directml>=1.18; sys_platform == 'win32'",
+    "onnxruntime>=1.18; sys_platform != 'win32'",
+]
+
+[project.optional-dependencies]
+# Light CPU engines. Small wheels, small models; runs on any machine.
+cpu = [
+    "faster-whisper>=1.1",
+    "vosk>=0.3.45",
+    "piper-tts>=1.3",
+    "kokoro-onnx>=0.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "import-linter>=2.0",
+    "ruff>=0.6",
+]
+
+[tool.uv]
+# faster-whisper, piper-tts and kokoro-onnx all depend on `onnxruntime`, which clashes
+# with `onnxruntime-directml` (same `onnxruntime` module). Keep only one build.
+override-dependencies = ["onnxruntime>=1.18; sys_platform != 'win32'"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/common", "src/stt", "src/tts", "src/gateway"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["models: needs downloaded model weights (opt-in: pytest -m models)"]
+addopts = "-m 'not models'"
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]
+
+[tool.importlinter]
+root_packages = ["common", "stt", "tts", "gateway"]
+
+[[tool.importlinter.contracts]]
+name = "stt and tts are independent of each other and of gateway"
+type = "independence"
+modules = ["stt", "tts", "gateway"]
+ignore_imports = [
+    "gateway.** -> stt.service",
+    "gateway.** -> stt.schemas",
+    "gateway.** -> tts.service",
+    "gateway.** -> tts.schemas",
+]
+
+[[tool.importlinter.contracts]]
+name = "gateway uses only the stt/tts facades"
+type = "forbidden"
+source_modules = ["gateway"]
+forbidden_modules = [
+    "stt.adapters", "stt.catalog", "stt.sessions", "stt.vad",
+    "tts.adapters", "tts.catalog",
+]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "common is a leaf library"
+type = "forbidden"
+source_modules = ["common"]
+forbidden_modules = ["stt", "tts", "gateway"]
